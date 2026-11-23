@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   create-branch:
-    if: github.event.label.name == 'status: approved'
+    if: "github.event.label.name == 'status: approved'"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scripts
