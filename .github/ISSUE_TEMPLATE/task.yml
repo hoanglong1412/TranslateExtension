@@ -1,0 +1,40 @@
+name: Task
+description: Work with no user-facing change (refactor, CI/workflow, dependencies, build/config, docs, tests, ...)
+title: "[Task] "
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        After review, add the `status: approved` label to automatically create the branch `task/<issue>-<slug>`.
+  - type: textarea
+    id: description
+    attributes:
+      label: Task description
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason / context
+  - type: input
+    id: software_version
+    attributes:
+      label: Software version
+      description: |
+        Base for the new branch, as `<branch> (<commit hash>)`. The hash (7–40 characters) must be on that branch.
+        Use `<branch> (latest)` for the newest commit — the workflow will write the full hash back here when it creates the branch.
+      placeholder: "main (0323417f99164176e038e8cbf64785cbae606472)"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+  - type: textarea
+    id: notes
+    attributes:
+      label: Technical notes / hints
