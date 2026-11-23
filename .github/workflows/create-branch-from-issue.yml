@@ -1,0 +1,30 @@
+name: Create branch from approved issue
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: create-branch-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-branch:
+    if: github.event.label.name == 'status: approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Create branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = require('./.github/scripts/create-branch-from-issue.js');
+            await run({ github, context, core });
