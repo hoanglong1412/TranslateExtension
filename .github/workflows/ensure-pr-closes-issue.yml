@@ -1,0 +1,29 @@
+name: Ensure PR closes its issue
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ensure-pr-closes-issue-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ensure-closes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Ensure body starts with "Closes #<id>"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = require('./.github/scripts/ensure-pr-closes-issue.js');
+            await run({ github, context, core });

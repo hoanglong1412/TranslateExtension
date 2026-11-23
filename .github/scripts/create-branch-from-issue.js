@@ -189,8 +189,11 @@ module.exports = async ({ github, context, core }) => {
     await github.rest.issues.update({ owner, repo, issue_number: num, body: newBody });
   }
 
-  // 8. Label + comment
+  // 8. Label (single state: approved -> in-progress) + comment
   await github.rest.issues.addLabels({ owner, repo, issue_number: num, labels: [DONE_LABEL] });
+  await github.rest.issues
+    .removeLabel({ owner, repo, issue_number: num, name: TRIGGER_LABEL })
+    .catch((e) => core.warning(`Could not remove "${TRIGGER_LABEL}" (${e.message})`));
   await comment(
     [
       `✅ Created branch [\`${branch}\`](${repoUrl}/tree/${encodeURI(branch)})`,
