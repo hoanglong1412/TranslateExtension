@@ -1,7 +1,7 @@
 name: New feature
 description: Propose a new feature
 title: "[Feature] "
-labels: ["enhancement"]
+type: Feature
 body:
   - type: markdown
     attributes:

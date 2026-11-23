@@ -4,10 +4,11 @@
 const TRIGGER_LABEL = 'status: approved';
 const DONE_LABEL = 'status: in-progress';
 
-// Type label -> branch folder
-const PREFIX_BY_LABEL = {
-  bug: 'bugfix',
-  enhancement: 'feature',
+// Issue type -> branch folder
+const PREFIX_BY_TYPE = {
+  Feature: 'feature',
+  Bug: 'bugfix',
+  Task: 'task',
 };
 
 // Issue form field holding the base, formatted as "<branch> (<commit hash | latest>)"
@@ -36,7 +37,7 @@ function replaceField(body, name, value) {
 function slugify(title) {
   return (
     title
-      .replace(/^\[(feature|bug)\]\s*/i, '')
+      .replace(/^\[(feature|bug|task)\]\s*/i, '')
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
       .replace(/đ/gi, 'd')
@@ -46,6 +47,28 @@ function slugify(title) {
       .slice(0, 40)
       .replace(/-+$/, '') || 'issue'
   );
+}
+
+/**
+ * Issue type name ("Feature", "Bug", ...) or null.
+ * Uses the REST `type` field, falling back to GraphQL `issueType` when REST doesn't include it.
+ */
+async function getIssueType({ github, core, owner, repo, issue }) {
+  if (issue.type?.name) return issue.type.name;
+  try {
+    const res = await github.graphql(
+      `query($owner: String!, $repo: String!, $num: Int!) {
+        repository(owner: $owner, name: $repo) {
+          issue(number: $num) { issueType { name } }
+        }
+      }`,
+      { owner, repo, num: issue.number },
+    );
+    return res?.repository?.issue?.issueType?.name ?? null;
+  } catch (e) {
+    core.warning(`Could not read issue type via GraphQL (${e.message})`);
+    return null;
+  }
 }
 
 module.exports = async ({ github, context, core }) => {
@@ -73,13 +96,16 @@ module.exports = async ({ github, context, core }) => {
     core.setFailed(msg);
   };
 
-  // 1. Branch folder from the type label
-  const labels = issue.labels.map((l) => (typeof l === 'string' ? l : l.name));
-  const typeLabel = Object.keys(PREFIX_BY_LABEL).find((l) => labels.includes(l));
-  if (!typeLabel) {
-    return fail(`issue is missing a ${Object.keys(PREFIX_BY_LABEL).map((l) => `\`${l}\``).join(' or ')} label.`);
+  // 1. Branch folder from the issue type
+  const supported = Object.keys(PREFIX_BY_TYPE).map((t) => `\`${t}\``).join(', ');
+  const issueType = await getIssueType({ github, core, owner, repo, issue });
+  if (!issueType) {
+    return fail(`issue has no type. Set the issue type to one of ${supported}.`);
   }
-  const prefix = PREFIX_BY_LABEL[typeLabel];
+  const prefix = PREFIX_BY_TYPE[issueType];
+  if (!prefix) {
+    return fail(`issue type \`${issueType}\` is not supported. Use one of ${supported}.`);
+  }
 
   // 2. Read base branch / base commit from "<branch> (<hash | latest>)"
   const version = readField(issue.body, FIELD_VERSION);
@@ -190,3 +216,5 @@ module.exports = async ({ github, context, core }) => {
 module.exports.slugify = slugify;
 module.exports.readField = readField;
 module.exports.replaceField = replaceField;
+module.exports.getIssueType = getIssueType;
+module.exports.PREFIX_BY_TYPE = PREFIX_BY_TYPE;
