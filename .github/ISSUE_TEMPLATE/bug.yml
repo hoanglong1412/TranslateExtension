@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a bug
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        After review, add the `status: approved` label to automatically create the branch `bugfix/<issue>-<slug>`.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior (logs, screenshots)
+  - type: input
+    id: software_version
+    attributes:
+      label: Software version
+      description: |
+        Version where the bug happens, as `<branch> (<commit hash>)`. The hash (7–40 characters) must be on that branch.
+        Use `<branch> (latest)` for the newest commit — the workflow will write the full hash back here when it creates the branch.
+      placeholder: "main (0323417f99164176e038e8cbf64785cbae606472)"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      placeholder: "Reproduced 3 out of 10 times"
